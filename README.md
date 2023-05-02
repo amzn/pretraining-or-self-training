@@ -2,13 +2,6 @@
 This repository contains the code for the paper titled **[Rethinking Semi-supervised Learning with Language Models]()**, built upon [huggingface](https://github.com/huggingface/transformers) and [semilearn](https://github.com/microsoft/Semi-supervised-learning).
 
 
-<p align="center">
-  <!--<a href="https://github.com/fairseq/fairseq"><img src="docs/pnlp_logo512.png" width="150"></a>-->
-  <a href="https://github.com/ZhengxiangShi/PretrainOrSelfTraining"><img src="https://cdn.londonandpartners.com/-/media/images/london/visit/things-to-do/sightseeing/london-attractions/coca-cola-london-eye/the-london-eye-2-640x360.jpg?mw=640&hash=F7D574072DAD523443450DF57E3B91530064E4EE" width="650"></a>
-  <!--<a href="https://princeton-nlp.github.io/"><img src="docs/fairseq_logo.png" width="150"></a>-->
-  <br />
-</p>
-
 ## Quick Links
 - [Rethinking Semi-supervised Learning with Language Models](#rethinking-semi-supervised-learning-with-language-models)
   - [Quick Links](#quick-links)
@@ -20,6 +13,9 @@ This repository contains the code for the paper titled **[Rethinking Semi-superv
   - [5. Self Training](#5-self-training)
   - [Bugs or questions?](#bugs-or-questions)
   - [Citation](#citation)
+  - [Authors](#authors)
+  - [Security](#security)
+  - [License](#license)
 
 ## Overview
 You can reproduce the continued pre-training and self training experiments of our recent paper [Rethinking Semi-supervised Learning with Language Models]().
@@ -129,64 +125,6 @@ for seed in 1 2 3 4 5; do \
 done
 ```
 
-<!-- Fully-supervised: Run the following command to fine-tune the roberta-base on the pre-trained checkpoints:
-```bash
-TASK_NAME=
-for seed in 1 2 3 4 5; do \
-    CUDA_VISIBLE_DEVICES=0 python run_finetune.py \
-        --train_file data/${TASK_NAME}/train_ft.json \
-        --validation_file data/${TASK_NAME}/dev_ft.json \
-        --test_file data/${TASK_NAME}/test_ft.json \
-        --model_name_or_path roberta-base \
-        --seed ${seed} \
-        --do_train \
-        --do_eval \
-        --do_predict \
-        --per_device_train_batch_size 16 \
-        --per_device_eval_batch_size 16 \
-        --max_seq_length 256 \
-        --num_train_epochs 10 \
-        --save_steps 500 \
-        --evaluation_strategy steps \
-        --learning_rate 2e-05 \
-        --warmup_ratio 0.06 \
-        --fp16 \
-        --metric_for_best_model eval_f1 \
-        --load_best_model_at_end \
-        --save_total_limit 1 \
-        --output_dir saved_finetuned/${TASK_NAME}_seed${seed}; \
-done
-```
-
-Fully-supervised + TAPT: Run the following command to fine-tune the roberta-base on the task adaptive pre-trained checkpoints:
-```bash
-TASK_NAME=
-for seed in 1 2 3 4 5; do \
-    CUDA_VISIBLE_DEVICES=0 python run_finetune.py \
-        --train_file data/${TASK_NAME}/train_ft.json \
-        --validation_file data/${TASK_NAME}/dev_ft.json \
-        --test_file data/${TASK_NAME}/test_ft.json \
-        --model_name_or_path saved_tapt/${TASK_NAME} \
-        --seed ${seed} \
-        --do_train \
-        --do_eval \
-        --do_predict \
-        --per_device_train_batch_size 16 \
-        --per_device_eval_batch_size 16 \
-        --max_seq_length 256 \
-        --num_train_epochs 10 \
-        --save_steps 500 \
-        --evaluation_strategy steps \
-        --learning_rate 2e-05 \
-        --warmup_ratio 0.06 \
-        --fp16 \
-        --metric_for_best_model eval_f1 \
-        --load_best_model_at_end \
-        --save_total_limit 1 \
-        --output_dir saved_finetuned/tapt_${TASK_NAME}_seed${seed}; \
-done
-``` -->
-
 ## 5. Self Training
 Run self training
 ```bash
@@ -252,8 +190,9 @@ If you have any inquiries pertaining to the code or the paper, please do not hes
   title={Rethinking Semi-supervised Learning with Language Models},
   author={Shi, Zhengxiang and Tonolini, Francesco and Aletras, Nikolaos and Yilmaz, Emine and Kazai, Gabriella and Jiao, Yunlong},
   year={2023},
-  url={},
-  booktitle={Arxiv}
+  address = {Toronto, Canada},
+  booktitle = {Findings of the Association for Computational Linguistics: ACL 2023},
+  publisher = {Association for Computational Linguistics},
 }
 ```
 
