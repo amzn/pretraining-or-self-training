@@ -190,7 +190,7 @@ If you have any inquiries pertaining to the code or the paper, please do not hes
   title={Rethinking Semi-supervised Learning with Language Models},
   author={Shi, Zhengxiang and Tonolini, Francesco and Aletras, Nikolaos and Yilmaz, Emine and Kazai, Gabriella and Jiao, Yunlong},
   year={2023},
-  address = {Seattle, Washington, USA},
+  address = {Toronto, Canada},
   booktitle = {Findings of the Association for Computational Linguistics: ACL 2023},
   publisher = {Association for Computational Linguistics},
 }
