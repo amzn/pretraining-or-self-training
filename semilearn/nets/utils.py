@@ -16,6 +16,16 @@ from torch.hub import load_state_dict_from_url
 
 
 def load_checkpoint(model, checkpoint_path):
+    """Load checkpoint weights into the model.
+
+    Args:
+        model (nn.Module): The model to load weights into.
+        checkpoint_path (str): Path to the checkpoint file.
+
+    Returns:
+        nn.Module: The model with loaded weights.
+
+    """
     if checkpoint_path and os.path.isfile(checkpoint_path):
         checkpoint = torch.load(checkpoint_path, map_location='cpu')
     else:
@@ -51,6 +61,18 @@ def load_checkpoint(model, checkpoint_path):
 
 
 def resize_pos_embed_vit(posemb, posemb_new, num_tokens=1, gs_new=()):
+    """Resize position embeddings when loading from state_dict.
+
+    Args:
+        posemb (torch.Tensor): Original position embeddings.
+        posemb_new (torch.Tensor): New position embeddings.
+        num_tokens (int): Number of tokens.
+        gs_new (tuple): New grid size.
+
+    Returns:
+        torch.Tensor: Resized position embeddings.
+
+    """
     # Rescale the grid of position embeddings when loading from state_dict. Adapted from
     # https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
     # _logger.info('Resized position embedding: %s to %s', posemb.shape, posemb_new.shape)
@@ -79,6 +101,17 @@ def param_groups_weight_decay(
         weight_decay=1e-5,
         no_weight_decay_list=()
 ):
+    """Separate parameters into groups for weight decay.
+
+    Args:
+        model (nn.Module): The model whose parameters need to be grouped.
+        weight_decay (float): Weight decay value.
+        no_weight_decay_list (list): List of layer names to exclude from weight decay.
+
+    Returns:
+        list: List of parameter groups with weight decay specified.
+
+    """
     # Ref: https://github.com/rwightman/pytorch-image-models
     no_weight_decay_list = set(no_weight_decay_list)
     decay = []
@@ -103,6 +136,17 @@ def _group(it, size):
 
 
 def _layer_map(model, layers_per_group=12, num_groups=None):
+    """Map layers to groups for layer-wise learning rate and weight decay.
+
+    Args:
+        model (nn.Module): The model to map layers for.
+        layers_per_group (int): Number of layers per group.
+        num_groups (int): Number of groups.
+
+    Returns:
+        dict: A dictionary mapping layer names to group indices.
+
+    """
     def _in_head(n, hp):
         if not hp:
             return True
@@ -135,6 +179,18 @@ def group_parameters(
         output_values=False,
         reverse=False,
 ):
+    """Group model parameters based on a group matcher.
+
+    Args:
+        module (nn.Module): The model whose parameters need to be grouped.
+        group_matcher (dict): A dictionary specifying how to group parameters.
+        output_values (bool): Whether to output parameter values.
+        reverse (bool): Whether to reverse the grouping.
+
+    Returns:
+        generator: A generator of grouped parameters.
+
+    """
     # Ref: https://github.com/rwightman/pytorch-image-models
     return group_with_matcher(
         module.named_parameters(), group_matcher, output_values=output_values, reverse=reverse)
@@ -152,6 +208,20 @@ def param_groups_layer_decay(
     Parameter groups for layer-wise lr decay & weight decay
     Based on BEiT: https://github.com/microsoft/unilm/blob/master/beit/optim_factory.py#L58
     # Ref: https://github.com/rwightman/pytorch-image-models
+
+    Define parameter groups for layer-wise learning rate decay and weight decay.
+
+    Args:
+        model (nn.Module): The model for which to define parameter groups.
+        lr (float): Learning rate.
+        weight_decay (float): Weight decay factor.
+        no_weight_decay_list (Tuple[str]): List of layer names to exclude from weight decay.
+        layer_decay (float): Layer-wise learning rate decay factor.
+        end_layer_decay (float): Layer-wise learning rate decay factor for the final layers.
+
+    Returns:
+        list: List of parameter groups with specified learning rates and weight decay.
+
     """
     no_weight_decay_list = set(no_weight_decay_list)
     param_group_names = {}  # NOTE for debugging
@@ -212,6 +282,18 @@ def group_with_matcher(
         output_values: bool = False,
         reverse: bool = False
 ):
+    """Group named objects based on a grouping matcher.
+
+    Args:
+        named_objects (iterable): A collection of named objects to be grouped.
+        group_matcher (dict or callable): A dictionary or callable that defines how to group objects.
+        output_values (bool, optional): If True, output values associated with group names. Default is False.
+        reverse (bool, optional): If True, reverse the mapping. Default is False.
+
+    Returns:
+        dict or dict of lists: A dictionary mapping group IDs to named objects or values.
+
+    """
     # Ref: https://github.com/rwightman/pytorch-image-models
     if isinstance(group_matcher, dict):
         # dictionary matcher contains a dict of raw-string regex expr that must be compiled
