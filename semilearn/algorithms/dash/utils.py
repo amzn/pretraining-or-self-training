@@ -13,6 +13,17 @@ class DashThresholdingHook(MaskingHook):
     """
     
     def __init__(self, rho_min, gamma, C, *args, **kwargs):
+        """
+        Initialize the DashThresholdingHook.
+
+        Args:
+            rho_min (float): Minimum threshold value for dynamic thresholding.
+            gamma (float): A parameter for adjusting the threshold value.
+            C (float): A constant factor for threshold calculation.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        """
         super().__init__(*args, **kwargs)
         self.gamma = gamma
         self.C = C
@@ -23,6 +34,13 @@ class DashThresholdingHook(MaskingHook):
     
     @torch.no_grad()
     def update(self, algorithm):
+        """
+        Update the threshold value.
+
+        Args:
+            algorithm: The parent algorithm.
+
+        """
         if self.rho_init is None:
             self.rho_init = algorithm.rho_init
 
@@ -40,6 +58,19 @@ class DashThresholdingHook(MaskingHook):
     
     @torch.no_grad()
     def masking(self, algorithm, logits_x_ulb, *args, **kwargs):    
+        """
+        Apply dynamic thresholding to generate masks.
+
+        Args:
+            algorithm: The parent algorithm.
+            logits_x_ulb (torch.Tensor): Logits for unlabeled data.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            torch.Tensor: A mask tensor.
+
+        """
         self.update(algorithm)
 
         if algorithm.use_hard_label:

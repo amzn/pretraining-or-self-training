@@ -7,6 +7,16 @@ import numpy as np
 
 
 def interleave_offsets(batch, nu):
+    """
+    Compute offsets for interleaving data samples into batches.
+
+    Args:
+        batch (int): Total number of data samples.
+        nu (int): Number of interleaved datasets.
+
+    Returns:
+        list: List of offsets for interleaving.
+    """
     groups = [batch // (nu + 1)] * (nu + 1)
     for x in range(batch - sum(groups)):
         groups[-x - 1] += 1
@@ -18,6 +28,16 @@ def interleave_offsets(batch, nu):
 
 
 def interleave(xy, batch):
+    """
+    Interleave multiple datasets into batches.
+
+    Args:
+        xy (list of lists): List of datasets to interleave.
+        batch (int): Batch size.
+
+    Returns:
+        list: List of interleaved datasets.
+    """
     nu = len(xy) - 1
     offsets = interleave_offsets(batch, nu)
     xy = [[v[offsets[p]:offsets[p + 1]] for p in range(nu + 1)] for v in xy]
@@ -29,8 +49,13 @@ def interleave(xy, batch):
 @torch.no_grad()
 def concat_all_gather(tensor):
     """
-    Performs all_gather operation on the provided tensors.
-    *** Warning ***: torch.distributed.all_gather has no gradient.
+    Perform an all_gather operation on the provided tensors.
+
+    Args:
+        tensor (torch.Tensor): Input tensor.
+
+    Returns:
+        torch.Tensor: Concatenated tensor from all processes.
     """
     tensors_gather = [torch.ones_like(tensor)
         for _ in range(torch.distributed.get_world_size())]
@@ -42,7 +67,19 @@ def concat_all_gather(tensor):
 
 @torch.no_grad()
 def mixup_one_target(x, y, alpha=1.0, is_bias=False):
-    """Returns mixed inputs, mixed targets, and lambda
+    """
+    Apply mixup augmentation to a single target.
+
+    Args:
+        x (torch.Tensor): Input data.
+        y (torch.Tensor): Target data.
+        alpha (float): Mixup hyperparameter.
+        is_bias (bool): Whether to use bias when computing lambda.
+
+    Returns:
+        torch.Tensor: Mixed input data.
+        torch.Tensor: Mixed target data.
+        float: Mixup lambda value.
     """
     if alpha > 0:
         lam = np.random.beta(alpha, alpha)

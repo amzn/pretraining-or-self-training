@@ -153,6 +153,19 @@ class Dash(AlgorithmBase):
 
 
     def train_step(self, x_lb, y_lb, x_ulb_w, x_ulb_s):
+        """
+        Perform a single training step.
+
+        Args:
+            x_lb (torch.Tensor): Labeled data inputs.
+            y_lb (torch.Tensor): Labeled data targets.
+            x_ulb_w (torch.Tensor): Unlabeled weakly augmented data inputs.
+            x_ulb_s (torch.Tensor): Unlabeled strongly augmented data inputs.
+
+        Returns:
+            dict: Dictionary containing training loss values and metrics.
+
+        """
         num_lb = y_lb.shape[0]
 
         # inference and calculate sup/unsup losses
