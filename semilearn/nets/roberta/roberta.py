@@ -8,6 +8,20 @@ from transformers import RobertaModel
 import os
 
 class ClassificationRoberta(nn.Module):
+    """
+    Classification model based on RoBERTa.
+
+    Args:
+        name (str): Name of the pretrained RoBERTa model to load.
+        num_classes (int, optional): Number of output classes. Default is 2.
+
+    Attributes:
+        roberta (RobertaModel): The pretrained RoBERTa model.
+        dropout (nn.Dropout): Dropout layer.
+        num_features (int): Number of output features from RoBERTa.
+        classifier (nn.Sequential): Classifier for final predictions.
+
+    """
     def __init__(self, name, num_classes=2):
         super(ClassificationRoberta, self).__init__()
         # Load pre-trained bert model
@@ -23,11 +37,17 @@ class ClassificationRoberta(nn.Module):
 
     def forward(self, x, only_fc=False, only_feat=False, return_embed=False, **kwargs):
         """
+        Forward pass for the model.
+
         Args:
-            x: input tensor, depends on only_fc and only_feat flag
-            only_fc: only use classifier, input should be features before classifier
-            only_feat: only return pooled features
-            return_embed: return word embedding, used for vat
+            x (dict): Input tensor, depends on only_fc and only_feat flag.
+            only_fc (bool): Only use the classifier, input should be features before classifier.
+            only_feat (bool): Only return pooled features.
+            return_embed (bool): Return word embeddings, used for VAT.
+
+        Returns:
+            dict: Dictionary containing 'logits' for classification logits, 'feat' for pooled features, and 'embed' for word embeddings if return_embed is True.
+
         """
         if only_fc:
             logits = self.classifier(x)
@@ -56,6 +76,16 @@ class ClassificationRoberta(nn.Module):
         
         
     def extract(self, x):
+        """
+        Extract features from RoBERTa without classification.
+
+        Args:
+            x (dict): Input tensor.
+
+        Returns:
+            torch.Tensor: Pooled features.
+
+        """
         out_dict = self.roberta(**x, output_hidden_states=True, return_dict=True)
         last_hidden = out_dict['last_hidden_state']
         drop_hidden = self.dropout(last_hidden)
@@ -63,6 +93,17 @@ class ClassificationRoberta(nn.Module):
         return pooled_output
 
     def group_matcher(self, coarse=False, prefix=''):
+        """
+        Define a group matcher for layer-wise weight decay.
+
+        Args:
+            coarse (bool): If True, use a coarse matcher.
+            prefix (str): Prefix for layer names.
+
+        Returns:
+            dict: Matcher dictionary.
+
+        """
         matcher = dict(stem=r'^{}roberta.embeddings'.format(prefix), blocks=r'^{}roberta.encoder.layer.(\d+)'.format(prefix))
         return matcher
 
@@ -72,6 +113,17 @@ class ClassificationRoberta(nn.Module):
 
 
 def roberta_base(pretrained=True, pretrained_path=None, **kwargs):
+    """
+    Load a pretrained RoBERTa model.
+
+    Args:
+        pretrained (bool, optional): Whether to use a pretrained model. Default is True.
+        pretrained_path (str, optional): Path to a pretrained model. If not provided, 'roberta-large' is used by default.
+
+    Returns:
+        ClassificationRoberta: Pretrained RoBERTa model.
+
+    """
     if not pretrained_path:
         # pretrained_path = 'roberta-base'
         pretrained_path = 'roberta-large'

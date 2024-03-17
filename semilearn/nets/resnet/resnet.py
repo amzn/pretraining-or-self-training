@@ -21,6 +21,22 @@ def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
 
 
 class BasicBlock(nn.Module):
+    """
+    A basic building block for residual networks.
+
+    Args:
+        inplanes: The number of input channels.
+        planes: The number of output channels.
+        stride: The stride of the convolution.
+        downsample: A downsampling layer, if needed.
+        groups: The number of convolution groups.
+        base_width: The base width of the convolution.
+        dilation: The dilation of the convolution.
+        norm_layer: The normalization layer to use.
+
+    Returns:
+        A tensor containing the output of the block.
+    """
     expansion: int = 1
 
     def __init__(
@@ -51,6 +67,15 @@ class BasicBlock(nn.Module):
         self.stride = stride
 
     def forward(self, x: Tensor) -> Tensor:
+        """
+        Forward pass through the block.
+
+        Args:
+            x: Input tensor.
+
+        Returns:
+            A tensor containing the output of the block.
+        """
         identity = x
 
         out = self.conv1(x)
@@ -75,6 +100,22 @@ class Bottleneck(nn.Module):
     # according to "Deep residual learning for image recognition"https://arxiv.org/abs/1512.03385.
     # This variant is also known as ResNet V1.5 and improves accuracy according to
     # https://ngc.nvidia.com/catalog/model-scripts/nvidia:resnet_50_v1_5_for_pytorch.
+    """
+    A bottleneck building block for residual networks.
+
+    Args:
+        inplanes: The number of input channels.
+        planes: The number of output channels.
+        stride: The stride of the convolution.
+        downsample: A downsampling layer, if needed.
+        groups: The number of convolution groups.
+        base_width: The base width of the convolution.
+        dilation: The dilation of the convolution.
+        norm_layer: The normalization layer to use.
+
+    Returns:
+        A tensor containing the output of the block.
+    """
 
     expansion: int = 4
 
@@ -105,6 +146,15 @@ class Bottleneck(nn.Module):
         self.stride = stride
 
     def forward(self, x: Tensor) -> Tensor:
+        """
+        Forward pass through the block.
+
+        Args:
+            x: Input tensor.
+
+        Returns:
+            A tensor containing the output of the block.
+        """
         identity = x
 
         out = self.conv1(x)
@@ -128,6 +178,21 @@ class Bottleneck(nn.Module):
 
 
 class ResNet50(nn.Module):
+    """
+    A ResNet50 model for image classification.
+
+    Args:
+        num_classes: The number of classes to classify.
+        zero_init_residual: Whether to zero-initialize the last BN in each residual branch.
+        groups: The number of groups to use in the convolution layers.
+        width_per_group: The width of each group in the convolution layers.
+        replace_stride_with_dilation: A list of booleans indicating whether to replace
+        the 2x2 stride with a dilated convolution in each residual block.
+        norm_layer: The normalization layer to use.
+
+    Returns:
+        A tensor containing the logits for each class.
+    """
 
     def __init__(
             self,
@@ -191,6 +256,19 @@ class ResNet50(nn.Module):
 
     def _make_layer(self, block: Type[Union[BasicBlock, Bottleneck]], planes: int, blocks: int,
                     stride: int = 1, dilate: bool = False) -> nn.Sequential:
+        """
+        Creates a layer of residual blocks.
+
+        Args:
+            block: The type of residual block to use.
+            planes: The number of output channels for each residual block.
+            blocks: The number of residual blocks in the layer.
+            stride: The stride of the first residual block in the layer.
+            dilate: Whether to dilate the convolution in the residual blocks.
+
+        Returns:
+            A sequential layer containing the residual blocks.
+        """
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -252,10 +330,27 @@ class ResNet50(nn.Module):
     
 
     def group_matcher(self, coarse=False, prefix=''):
+        """
+        Creates a dictionary mapping group names to regular expression patterns.
+
+        Args:
+            coarse: Whether to match groups coarsely (e.g. 'layer1') or finely (e.g.
+            'layer1.1').
+            prefix: A prefix to add to all group names.
+
+        Returns:
+            A dictionary mapping group names to regular expression patterns.
+        """
         matcher = dict(stem=r'^{}conv1|^{}bn1|^{}maxpool'.format(prefix, prefix, prefix), blocks=r'^{}layer(\d+)'.format(prefix) if coarse else r'^{}layer(\d+)\.(\d+)'.format(prefix))
         return matcher
 
     def no_weight_decay(self):
+        """
+        Returns a list of parameter names that should not have weight decay applied.
+
+        Returns:
+            A list of parameter names.
+        """
         nwd = []
         for n, _ in self.named_parameters():
             if 'bn' in n or 'bias' in n:

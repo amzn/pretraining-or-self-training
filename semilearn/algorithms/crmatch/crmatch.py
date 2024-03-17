@@ -29,18 +29,39 @@ def rotate_img(img, rot):
 
 
 class RotNet(torch.utils.data.Dataset):
-    '''
-    Dataloader for RotNet
-    the image first goes through data augmentation, and then rotate 4 times
-    the output is 4 rotated views of the augmented image,
-    the corresponding labels are 0 1 2 3
-    '''
+    """
+    Dataloader for RotNet.
+
+    The image first goes through data augmentation, and then it is rotated 4 times.
+    The output is 4 rotated views of the augmented image, and the corresponding labels are 0, 1, 2, 3.
+
+    Args:
+        data: The dataset containing image data.
+        transform (callable, optional): A function/transform to apply to the image data.
+        target_transform (callable, optional): A function/transform to apply to the target (labels).
+
+    """
     def __init__(self, data, transform=None, target_transform=None):
         self.data = data
         self.transform = transform
         self.target_transform = target_transform
 
     def __getitem__(self, index):
+        """
+        Get an item from the RotNet dataset.
+
+        Args:
+            index (int): The index of the item to retrieve.
+
+        Returns:
+            tuple: A tuple containing:
+                - img (PIL.Image.Image): The augmented image.
+                - rotated_img_90 (PIL.Image.Image): The image rotated 90 degrees.
+                - rotated_img_180 (PIL.Image.Image): The image rotated 180 degrees.
+                - rotated_img_270 (PIL.Image.Image): The image rotated 270 degrees.
+                - rotation_labels (torch.Tensor): The labels corresponding to rotations (0, 1, 2, 3).
+
+        """
         img = self.data[index]
 
         if isinstance(img, np.ndarray):
@@ -56,10 +77,30 @@ class RotNet(torch.utils.data.Dataset):
         return img, rotate_img(img, 90), rotate_img(img, 180), rotate_img(img, 270), rotation_labels
 
     def __len__(self):
+        """
+        Get the length of the RotNet dataset.
+        """
         return len(self.data)
 
 
 class CRMatch_Net(nn.Module):
+    """
+    Contrastive and Rotation Matching Network.
+
+    Args:
+        base (nn.Module): The base neural network architecture.
+        args: Configuration arguments for the network.
+        use_rot (bool, optional): Whether to use rotation matching. Default is True.
+
+    Attributes:
+        backbone (nn.Module): The base neural network.
+        use_rot (bool): Whether to use rotation matching.
+        feat_planes (int): The number of feature planes in the base network.
+        args: Configuration arguments for the network.
+        rot_classifier (nn.Sequential): The rotation classifier (if using rotation matching).
+        ds_classifier (nn.Linear): The downstream classifier.
+
+    """
     def __init__(self, base, args, use_rot=True):
         super(CRMatch_Net, self).__init__()
         self.backbone = base
@@ -87,6 +128,20 @@ class CRMatch_Net(nn.Module):
         self.ds_classifier = nn.Linear(feat_map_size, self.feat_planes, bias=True)
 
     def forward(self, x):
+        """
+        Forward pass through the CRMatch_Net network.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+
+        Returns:
+            dict: Dictionary containing various logits and feature tensors.
+                - 'logits' (`torch.Tensor`): Logits from the main classification head.
+                - 'logits_ds' (`torch.Tensor`): Logits from the downstream classifier.
+                - 'feat' (`torch.Tensor`): Feature maps extracted from the input.
+                - 'logits_rot' (`torch.Tensor`, optional): Logits from the rotation classifier (if enabled).
+
+        """
         feat_maps = self.backbone.extract(x)
 
         if 'wrn' in self.args.net or 'resnet' in self.args.net:
@@ -113,6 +168,16 @@ class CRMatch_Net(nn.Module):
         return results_dict
 
     def group_matcher(self, coarse=False):
+        """
+        Get the group matcher from the backbone network.
+
+        Args:
+            coarse (bool, optional): Whether to use a coarse matcher. Default is False.
+
+        Returns:
+            nn.Module: The group matcher module.
+
+        """
         matcher = self.backbone.group_matcher(coarse, prefix='backbone.')
         return matcher
 
@@ -148,6 +213,13 @@ class CRMatch(AlgorithmBase):
         self.use_hard_label = hard_label
 
     def set_data_loader(self):
+        """
+        Set data loaders for training.
+
+        Returns:
+            dict: Dictionary containing data loaders.
+
+        """
         loader_dict = super().set_data_loader()
 
         if self.use_rot:
@@ -176,11 +248,16 @@ class CRMatch(AlgorithmBase):
         return ema_model
 
     def set_hooks(self):
+        """
+        Set hooks for the CRMatch algorithm.
+
+        """
         self.register_hook(FixedThresholdingHook(), "MaskingHook")
         super().set_hooks()
 
 
     def train(self):
+        
         self.model.train()
         self.call_hook("before_run")
 
@@ -223,6 +300,21 @@ class CRMatch(AlgorithmBase):
 
 
     def train_step(self, x_lb, y_lb, x_ulb_w, x_ulb_s, x_ulb_rot=None, rot_v=None):
+        """
+        Perform a single training step.
+
+        Args:
+            x_lb (torch.Tensor): Labeled input data.
+            y_lb (torch.Tensor): Labeled targets.
+            x_ulb_w (torch.Tensor or dict): Unlabeled input data (weakly augmented).
+            x_ulb_s (torch.Tensor): Unlabeled input data (strongly augmented).
+            x_ulb_rot (torch.Tensor, optional): Unlabeled input data for rotation matching (if using rotation matching).
+            rot_v (torch.Tensor, optional): Rotation labels for rotation matching (if using rotation matching).
+
+        Returns:
+            dict: Dictionary containing training metrics.
+
+        """
         num_lb = y_lb.shape[0]
         num_ulb = len(x_ulb_w['input_ids']) if isinstance(x_ulb_w, dict) else x_ulb_w.shape[0]
 
@@ -282,6 +374,9 @@ class CRMatch(AlgorithmBase):
 
     @staticmethod
     def get_argument():
+        """
+        Get algorithm-specific arguments.
+        """
         return [
             SSL_Argument('--hard_label', str2bool, True),
             SSL_Argument('--rot_loss_ratio', float, 1.0, 'weight for rot loss, set to 0 for nlp and speech'),

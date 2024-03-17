@@ -58,12 +58,39 @@ class BasicBlock(nn.Module):
 
 
 class NetworkBlock(nn.Module):
+    """
+    Creates a network block for a Wide Residual Network.
+
+    Args:
+        nb_layers (int): Number of layers in the block.
+        in_planes (int): Number of input channels.
+        out_planes (int): Number of output channels.
+        block (nn.Module): The basic building block of the network.
+        stride (int): The stride of the convolutional layers.
+        drop_rate (float, optional): Dropout rate (default: 0.0).
+        activate_before_residual (bool, optional): Whether to apply activation before residual connection (default: False).
+    """
     def __init__(self, nb_layers, in_planes, out_planes, block, stride, drop_rate=0.0, activate_before_residual=False):
         super(NetworkBlock, self).__init__()
         self.layer = self._make_layer(
             block, in_planes, out_planes, nb_layers, stride, drop_rate, activate_before_residual)
 
     def _make_layer(self, block, in_planes, out_planes, nb_layers, stride, drop_rate, activate_before_residual):
+        """
+        Create a layer of residual blocks.
+
+        Args:
+            block (nn.Module): The basic building block of the network.
+            in_planes (int): Number of input channels.
+            out_planes (int): Number of output channels.
+            nb_layers (int): Number of layers in the block.
+            stride (int): The stride of the convolutional layers.
+            drop_rate (float): Dropout rate.
+            activate_before_residual (bool): Whether to apply activation before residual connection.
+
+        Returns:
+            nn.Sequential: A sequence of residual blocks.
+        """
         layers = []
         for i in range(int(nb_layers)):
             layers.append(block(i == 0 and in_planes or out_planes, out_planes,
@@ -75,6 +102,17 @@ class NetworkBlock(nn.Module):
 
 
 class WideResNetVar(nn.Module):
+    """
+    Creates a Wide Residual Network (WRN) variant model.
+
+    Args:
+        first_stride (int): The stride of the first convolutional layer.
+        num classes (int): Number of output classes.
+        depth (int, optional): Depth of the network (default: 28).
+        widen_factor (int, optional): Width multiplier for the network (default: 2).
+        drop_rate (float, optional): Dropout rate (default: 0.0).
+        **kwargs: Additional keyword arguments.
+    """
     def __init__(self, first_stride, num_classes, depth=28, widen_factor=2, drop_rate=0.0, **kwargs):
         super(WideResNetVar, self).__init__()
         channels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor, 128 * widen_factor]
@@ -120,10 +158,16 @@ class WideResNetVar(nn.Module):
 
     def forward(self, x, only_fc=False, only_feat=False, **kwargs):
         """
+        Forward pass through the model.
+
         Args:
-            x: input tensor, depends on only_fc and only_feat flag
-            only_fc: only use classifier, input should be features before classifier
-            only_feat: only return pooled features
+            x (torch.Tensor): Input tensor.
+            only_fc (bool, optional): Whether to return only the classifier output (default: False).
+            only_feat (bool, optional): Whether to return only the pooled features (default: False).
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            torch.Tensor or dict: Model output or a dictionary with 'logits' and 'feat' keys.
         """
 
         if only_fc:

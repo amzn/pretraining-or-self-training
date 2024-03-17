@@ -7,6 +7,18 @@ import tqdm
 import argparse
 
 def format_dataset(input_path, max_length=512):
+    """
+    Format a dataset by saving text samples into text files.
+
+    Args:
+        input_path (str): The path to the directory containing the original dataset.
+        max_length (int, optional): The maximum length of text to keep (default: 512).
+
+    Example:
+        ```
+        format_dataset('data', max_length=512)
+        ```
+    """
     train_file = os.path.join(input_path, 'train.json')
     dev_file = os.path.join(input_path, 'dev.json')
     test_file = os.path.join(input_path, 'test.json')
