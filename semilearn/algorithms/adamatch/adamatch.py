@@ -12,11 +12,32 @@ from semilearn.algorithms.utils import ce_loss, consistency_loss,  SSL_Argument,
 
 
 class AdaMatch(AlgorithmBase):
+    """
+    AdaMatch Algorithm for Semi-Supervised Learning.
+
+    Args:
+        args: Command-line arguments and configurations.
+        net_builder: The network builder for constructing the model.
+        tb_log: TensorBoard logging instance (optional).
+        logger: Logging instance (optional).
+
+    Attributes:
+        p_cutoff (float): The confidence threshold for masking.
+        T (float): Temperature parameter for pseudo-label generation.
+        use_hard_label (bool): Whether to use hard labels for pseudo-labeling.
+        dist_align (bool): Whether to perform distribution alignment.
+        ema_p (float): Exponential moving average parameter.
+
+    """
     def __init__(self, args, net_builder, tb_log=None, logger=None):
         super().__init__(args, net_builder, tb_log, logger) 
         self.init(p_cutoff=args.p_cutoff, T=args.T, hard_label=args.hard_label, dist_align=args.dist_align, ema_p=args.ema_p)
     
     def init(self, p_cutoff, T, hard_label=True, dist_align=True, ema_p=0.999):
+        """
+        Initialize the AdaMatch algorithm parameters.
+
+       """
         self.p_cutoff = p_cutoff
         self.T = T
         self.use_hard_label = hard_label
@@ -25,6 +46,9 @@ class AdaMatch(AlgorithmBase):
 
 
     def set_hooks(self):
+        """
+        Set up hooks for the AdaMatch algorithm.
+        """
         self.register_hook(PseudoLabelingHook(), "PseudoLabelingHook")
         self.register_hook(
             DistAlignEMAHook(num_classes=self.num_classes, momentum=self.args.ema_p, p_target_type='model'), 
@@ -34,6 +58,19 @@ class AdaMatch(AlgorithmBase):
 
 
     def train_step(self, x_lb, y_lb, x_ulb_w, x_ulb_s):
+        """
+        Perform a single training step for AdaMatch.
+
+        Args:
+            x_lb (torch.Tensor): Labeled data inputs.
+            y_lb (torch.Tensor): Labeled data ground truth labels.
+            x_ulb_w (torch.Tensor): Unlabeled data inputs for weak augmentation.
+            x_ulb_s (torch.Tensor): Unlabeled data inputs for strong augmentation.
+
+        Returns:
+            dict: A dictionary containing training statistics.
+
+        """
         num_lb = y_lb.shape[0]
 
         # inference and calculate sup/unsup losses
@@ -97,6 +134,16 @@ class AdaMatch(AlgorithmBase):
 
 
     def load_model(self, load_path):
+        """
+        Load a trained model from a checkpoint file.
+
+        Args:
+            load_path (str): Path to the checkpoint file.
+
+        Returns:
+            dict: A dictionary containing the loaded model and additional parameters.
+
+        """
         checkpoint = super().load_model(load_path)
         self.hooks_dict['DistAlignHook'].p_model = checkpoint['p_model'].cuda(self.args.gpu)
         self.hooks_dict['DistAlignHook'].p_target = checkpoint['p_target'].cuda(self.args.gpu)
@@ -105,6 +152,12 @@ class AdaMatch(AlgorithmBase):
 
     @staticmethod
     def get_argument():
+        """
+        Get a list of arguments and their types for configuring AdaMatch.
+
+        Returns:
+            List[SSL_Argument]: A list of arguments and their types.
+        """
         return [
             SSL_Argument('--hard_label', str2bool, True),
             SSL_Argument('--T', float, 0.5),

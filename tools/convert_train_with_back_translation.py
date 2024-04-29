@@ -43,6 +43,20 @@ def cut_sentence(s):
 
 
 def back_translation_augmentation(train_file):
+    """
+    Perform data augmentation through back-translation.
+
+    Args:
+        train_file (str): The path to the JSON file containing the training data.
+
+    Returns:
+        dict: The augmented training data.
+
+    Example:
+        ```
+        augmented_data = back_translation_augmentation('train.json')
+        ```
+    """
     with open(train_file, 'r') as f:
         train_data = json.load(f)
 

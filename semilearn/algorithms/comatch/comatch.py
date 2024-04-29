@@ -12,7 +12,21 @@ from semilearn.algorithms.utils import ce_loss, consistency_loss, SSL_Argument, 
 
 
 class CoMatch_Net(nn.Module):
+    """
+    Co-Matching Network for Contrastive Learning.
+
+    Args:
+        base (nn.Module): The base neural network architecture.
+        proj_size (int, optional): The size of the projection layer. Default is 128.
+
+    Attributes:
+        backbone (nn.Module): The base neural network.
+        feat_planes (int): The number of feature planes in the base network.
+        mlp_proj (nn.Sequential): The projection MLP.
+        
+    """
     def __init__(self, base, proj_size=128):
+        
         super(CoMatch_Net, self).__init__()
         self.backbone = base
         self.feat_planes = base.num_features
@@ -24,22 +38,66 @@ class CoMatch_Net(nn.Module):
         ])
         
     def l2norm(self, x, power=2):
+        """
+        Apply L2 normalization to input tensor.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+            power (int, optional): The power parameter for normalization. Default is 2.
+
+        Returns:
+            torch.Tensor: Normalized tensor.
+
+        """
         norm = x.pow(power).sum(1, keepdim=True).pow(1. / power)
         out = x.div(norm)
         return out
     
     def forward(self, x, **kwargs):
+        """
+        Forward pass through the CoMatch network.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+
+        Returns:
+            dict: Dictionary containing `logits` and `feat` tensors.
+
+        """
         feat = self.backbone(x, only_feat=True)
         logits = self.backbone(feat, only_fc=True)
         feat_proj = self.l2norm(self.mlp_proj(feat))
         return {'logits':logits, 'feat':feat_proj}
 
     def group_matcher(self, coarse=False):
+        """
+        Get the group matcher from the backbone network.
+
+        Args:
+            coarse (bool, optional): Whether to use a coarse matcher. Default is False.
+
+        Returns:
+            nn.Module: The group matcher module.
+
+        """
         matcher = self.backbone.group_matcher(coarse, prefix='backbone.')
         return matcher
 
 
 def comatch_contrastive_loss(feats_x_ulb_s_0, feats_x_ulb_s_1, Q, T=0.2):
+    """
+    Calculate the Co-Match contrastive loss.
+
+    Args:
+        feats_x_ulb_s_0 (torch.Tensor): Features from the first set of unlabeled data.
+        feats_x_ulb_s_1 (torch.Tensor): Features from the second set of unlabeled data.
+        Q (torch.Tensor): The positive pair indicator matrix.
+        T (float, optional): The temperature parameter. Default is 0.2.
+
+    Returns:
+        torch.Tensor: The computed contrastive loss.
+
+    """
     # embedding similarity
     sim = torch.exp(torch.mm(feats_x_ulb_s_0, feats_x_ulb_s_1.t())/ T) 
     sim_probs = sim / sim.sum(1, keepdim=True)
