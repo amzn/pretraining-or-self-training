@@ -52,7 +52,7 @@ timm==0.5.4
 tokenizers==0.12.1
 datasets==2.7.1
 evaluate==0.3.0
-tqdm==4.64.0
+tqdm==4.66.3
 transformers==4.36.0
 typing-extensions==4.3.0
 urllib3==1.26.18
