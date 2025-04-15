@@ -9,6 +9,29 @@ import argparse
 import collections
 
 def format_dataset(file_path, task_name, train_size, valid_size, test_size, keep_original_dev_test=False):
+    """
+    Format a dataset by selecting a specific number of samples per class for training, validation, and testing.
+
+    Args:
+        file_path (str): The path to the directory containing the original dataset.
+        task_name (str): The name of the dataset/task.
+        train_size (int): The number of training samples per class.
+        valid_size (int): The number of validation samples per class.
+        test_size (int): The number of test samples per class.
+        keep_original_dev_test (bool, optional): Whether to keep the original dev and test sets (default: False).
+
+    Raises:
+        AssertionError: If the specified sample sizes are not divisible by the number of classes.
+
+    Note:
+        This function assumes that the dataset is stored in JSON format with separate files for training, validation,
+        and test sets.
+
+    Example:
+        ```
+        format_dataset('data', 'SST-2', 500, 100, 100, keep_original_dev_test=False)
+        ```
+    """
     num_classes = {
         'aclImdb': 2,
         'SST-2': 2,
