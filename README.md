@@ -198,7 +198,7 @@ If you have any inquiries pertaining to the code or the paper, please do not hes
 
 ## Authors
 
-- [**Zhengxiang Shi**](https://zhengxiangshi.github.io/): Main contributor
+- [**Zhengxiang Shi**](https://profiles.ucl.ac.uk/83462-zhengxiang-shi): Main contributor
 
 ## Security
 
