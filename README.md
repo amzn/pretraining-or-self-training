@@ -182,7 +182,7 @@ done
 ```
 
 ## Bugs or questions?
-If you have any inquiries pertaining to the code or the paper, please do not hesitate to contact [Zhengxiang Shi](https://zhengxiangshi.github.io/). In case you encounter any issues while utilising the code or wish to report a bug, you may open an issue. We kindly request that you provide specific details regarding the problem so that we can offer prompt and efficient assistance.
+If you have any inquiries pertaining to the code or the paper, please do not hesitate to contact [Zhengxiang Shi](https://profiles.ucl.ac.uk/83462-zhengxiang-shi). In case you encounter any issues while utilising the code or wish to report a bug, you may open an issue. We kindly request that you provide specific details regarding the problem so that we can offer prompt and efficient assistance.
 
 ## Citation
 ```
