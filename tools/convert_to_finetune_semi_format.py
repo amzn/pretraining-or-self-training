@@ -8,6 +8,17 @@ import argparse
 import numpy as np
 
 def format_dataset(input_path, num_labels=20, max_length=512):
+    """
+    Format a dataset by selecting a specific number of labeled samples and a maximum text length.
+
+    Args:
+        input_path (str): The path to the directory containing the original dataset and labeled indices.
+        num_labels (int, optional): The number of labeled samples to select (default: 20).
+        max_length (int, optional): The maximum length of text to keep (default: 512).
+
+    Example:
+        format_dataset('data', num_labels=20, max_length=512)
+    """
     train_file = os.path.join(input_path, 'train.json')
 
     with open(train_file, 'r') as f:

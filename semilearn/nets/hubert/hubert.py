@@ -9,6 +9,13 @@ from transformers import HubertModel
 
 
 class ClassificationHubert(nn.Module):
+    """
+    A PyTorch model for text classification using HuBERT.
+
+    Args:
+        name: The name of the pre-trained HuBERT model to load.
+        num_classes: The number of classes to classify.
+    """
     def __init__(self, name, num_classes=2):
         super(ClassificationHubert, self).__init__()
         self.model = HubertModel.from_pretrained(name)
@@ -24,10 +31,16 @@ class ClassificationHubert(nn.Module):
 
     def forward(self, x, only_fc=False, only_feat=False, **kwargs):
         """
+        Forward pass through the model.
+
         Args:
-            x: input tensor, depends on only_fc and only_feat flag
-            only_fc: only use classifier, input should be features before classifier
-            only_feat: only return pooled features
+            x: Input tensor, a batch of audio sequences.
+            only_fc: Whether to use only the classification head.
+            only_feat: Whether to return only the pooled features.
+
+        Returns:
+            A dictionary containing the logits and/or pooled features, depending on the
+            flags passed.
         """
         if only_fc:
             logits = self.classifier(x)
@@ -43,6 +56,16 @@ class ClassificationHubert(nn.Module):
         return result_dict
 
     def extract(self, x):
+        """
+        Extract the pooled features from a batch of audio sequences.
+
+        Args:
+            x : Input tensor, a batch of audio sequences.
+
+        Returns:
+            A tensor containing the pooled features for each audio sequence.
+        """
+
         out_dict = self.model(x, output_hidden_states=True, return_dict=True)
         last_hidden = out_dict['last_hidden_state']
         embed = out_dict['hidden_states'][0]
@@ -51,10 +74,28 @@ class ClassificationHubert(nn.Module):
         return pooled_output
 
     def group_matcher(self, coarse=False, prefix=''):
+        """
+        Get a dictionary mapping group names to regular expressions matching the
+        parameters in those groups.
+
+        Args:
+            coarse: Whether to match the parameters in a coarse-grained way.
+            prefix: A prefix to add to all of the regular expressions.
+
+        Returns:
+            A dictionary mapping group names to regular expressions matching the
+            parameters in those groups.
+        """
         matcher = dict(stem=r'^{}model.feature_projection|^{}model.feature_extractor|^{}model.encoder.pos_conv_embed'.format(prefix, prefix, prefix), blocks=r'^{}model.encoder.layers.(\d+)'.format(prefix))
         return matcher
 
     def no_weight_decay(self):
+        """
+        Get a list of parameter names that should not be decayed when training the model.
+
+        Returns:
+            A list of parameter names that should not be decayed when training the model.
+        """
         return []
 
 

@@ -17,7 +17,25 @@ from semilearn.nets.utils import load_checkpoint
 
 
 class PatchEmbed(nn.Module):
-    """ 2D Image to Patch Embedding
+    """2D Image to Patch Embedding.
+
+    Args:
+        img_size (int or tuple): Input image size. Default is 224.
+        patch_size (int or tuple): Patch size. Default is 16.
+        in_chans (int): Number of input channels. Default is 3.
+        embed_dim (int): Embedding dimension. Default is 768.
+        norm_layer (nn.Module, optional): Normalization layer. Default is None.
+        flatten (bool): Whether to flatten the output. Default is True.
+
+    Attributes:
+        img_size (tuple): Input image size.
+        patch_size (tuple): Patch size.
+        grid_size (tuple): Grid size after patching.
+        num_patches (int): Number of patches.
+        flatten (bool): Whether to flatten the output.
+        proj (nn.Conv2d): Convolutional projection layer.
+        norm (nn.Module): Normalization layer.
+
     """
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, norm_layer=None, flatten=True):
         super().__init__()
@@ -44,7 +62,22 @@ class PatchEmbed(nn.Module):
 
 
 class Mlp(nn.Module):
-    """ MLP as used in Vision Transformer, MLP-Mixer and related networks
+    """MLP as used in Vision Transformer, MLP-Mixer, and related networks.
+
+    Args:
+        in_features (int): Number of input features.
+        hidden_features (int, optional): Number of hidden features. Default is None.
+        out_features (int, optional): Number of output features. Default is None.
+        act_layer (nn.Module, optional): Activation function layer. Default is nn.GELU.
+        drop (float or tuple, optional): Dropout probability. Default is 0.
+
+    Attributes:
+        fc1 (nn.Linear): First fully connected layer.
+        act (nn.Module): Activation function layer.
+        drop1 (nn.Dropout): First dropout layer.
+        fc2 (nn.Linear): Second fully connected layer.
+        drop2 (nn.Dropout): Second dropout layer.
+
     """
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
         super().__init__()
@@ -68,6 +101,24 @@ class Mlp(nn.Module):
 
 
 class Attention(nn.Module):
+    """Multi-Head Attention Mechanism.
+
+    Args:
+        dim (int): Input feature dimension.
+        num_heads (int): Number of attention heads.
+        qkv_bias (bool): Whether to include bias in query, key, and value linear transformations. Default is False.
+        attn_drop (float): Dropout probability applied to the attention weights. Default is 0.
+        proj_drop (float): Dropout probability applied to the output of the linear transformation. Default is 0.
+
+    Attributes:
+        num_heads (int): Number of attention heads.
+        scale (float): Scaling factor for attention scores.
+        qkv (nn.Linear): Linear transformation for query, key, and value.
+        attn_drop (nn.Dropout): Dropout layer for attention weights.
+        proj (nn.Linear): Linear transformation for the output.
+        proj_drop (nn.Dropout): Dropout layer for the output.
+
+    """
     def __init__(self, dim, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0.):
         super().__init__()
         assert dim % num_heads == 0, 'dim should be divisible by num_heads'
@@ -96,6 +147,17 @@ class Attention(nn.Module):
 
 
 class LayerScale(nn.Module):
+    """Layer Scaling Module.
+
+    Args:
+        dim (int): Input feature dimension.
+        init_values (float): Initial scaling values. Default is 1e-5.
+        inplace (bool): Whether to perform the operation in-place. Default is False.
+
+    Attributes:
+        gamma (nn.Parameter): Learnable scaling parameter.
+
+    """
     def __init__(self, dim, init_values=1e-5, inplace=False):
         super().__init__()
         self.inplace = inplace
@@ -106,6 +168,31 @@ class LayerScale(nn.Module):
 
 
 class Block(nn.Module):
+    """Transformer Block.
+
+    Args:
+        dim (int): Input feature dimension.
+        num_heads (int): Number of attention heads.
+        mlp_ratio (float): Ratio of hidden dimension in the MLP. Default is 4.0.
+        qkv_bias (bool): Whether to include bias in query, key, and value linear transformations. Default is False.
+        drop (float): Dropout probability. Default is 0.
+        attn_drop (float): Dropout probability applied to the attention weights. Default is 0.
+        init_values (float): Initial scaling values for LayerScale. Default is None.
+        drop_path (float): Dropout probability for stochastic depth. Default is 0.
+        act_layer (nn.Module): Activation function layer. Default is nn.GELU.
+        norm_layer (nn.Module): Normalization layer. Default is nn.LayerNorm.
+
+    Attributes:
+        norm1 (nn.Module): Layer normalization before the first attention block.
+        attn (Attention): Multi-head attention mechanism.
+        ls1 (LayerScale): Layer scaling after the first attention block.
+        drop_path1 (nn.Module): Dropout path for the first attention block.
+        norm2 (nn.Module): Layer normalization before the second MLP block.
+        mlp (Mlp): Multi-layer perceptron.
+        ls2 (LayerScale): Layer scaling after the second MLP block.
+        drop_path2 (nn.Module): Dropout path for the second MLP block.
+
+    """
 
     def __init__(
             self, dim, num_heads, mlp_ratio=4., qkv_bias=False, drop=0., attn_drop=0., init_values=None,
@@ -131,10 +218,49 @@ class Block(nn.Module):
 
 
 class VisionTransformer(nn.Module):
-    """ Vision Transformer
+    """Vision Transformer - An implementation of the Vision Transformer model for image recognition.
+
     A PyTorch impl of : `An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale`
         - https://arxiv.org/abs/2010.11929
+
+    Args:
+        img_size (int or tuple): Input image size.
+        patch_size (int or tuple): Patch size.
+        in_chans (int): Number of input channels.
+        num_classes (int): Number of classes for classification head.
+        global_pool (str): Type of global pooling for final sequence ('', 'avg', or 'token').
+        embed_dim (int): Embedding dimension.
+        depth (int): Depth of the transformer.
+        num_heads (int): Number of attention heads.
+        mlp_ratio (float): Ratio of MLP hidden dimension to embedding dimension.
+        qkv_bias (bool): Enable bias for qkv if True.
+        drop_rate (float): Dropout rate.
+        attn_drop_rate (float): Attention dropout rate.
+        drop_path_rate (float): Stochastic depth rate.
+        init_values (float): Layer-scale initialization values.
+        embed_layer (nn.Module): Patch embedding layer.
+        norm_layer (nn.Module): Normalization layer.
+        act_layer (nn.Module): Activation layer.
+        block_fn (nn.Module): Transformer block type.
+
+    Attributes:
+        num_classes (int): Number of classes for classification head.
+        global_pool (str): Type of global pooling for final sequence.
+        num_features (int): Number of features.
+        embed_dim (int): Embedding dimension.
+        num_tokens (int): Number of tokens.
+        grad_checkpointing (bool): Whether gradient checkpointing is enabled.
+        patch_embed (nn.Module): Patch embedding layer.
+        cls_token (nn.Parameter): Learnable classification token.
+        pos_embed (nn.Parameter): Learnable positional embeddings.
+        pos_drop (nn.Dropout): Dropout layer for positional embeddings.
+        blocks (nn.Sequential): Transformer blocks.
+        norm (nn.Module): Normalization layer.
+        fc_norm (nn.Module): Normalization layer for the classifier head.
+        head (nn.Linear): Classifier head layer.
+
     """
+
 
     def __init__(
             self, img_size=224, patch_size=16, in_chans=3, num_classes=1000, global_pool='token',
@@ -208,11 +334,17 @@ class VisionTransformer(nn.Module):
 
 
     def forward(self, x, only_fc=False, only_feat=False, **kwargs):
-        """
+        """Forward pass through the Vision Transformer model.
+
         Args:
-            x: input tensor, depends on only_fc and only_feat flag
-            only_fc: only use classifier, input should be features before classifier
-            only_feat: only return pooled features
+            x (Tensor): Input image tensor.
+            only_fc (bool): Whether to only use the classifier. Input should be features before classifier.
+            only_feat (bool): Whether to only return feature embeddings.
+
+        Returns:
+            Tensor or dict: If only_fc is True, returns classifier output. If only_feat is True, returns feature embeddings.
+                            Otherwise, returns a dictionary with 'logits' for classifier output and 'feat' for feature embeddings.
+
         """
         
         if only_fc:
@@ -234,13 +366,32 @@ class VisionTransformer(nn.Module):
         return {'pos_embed', 'cls_token'}
     
     def group_matcher(self, coarse=False, prefix=''):
+        """Define a group matcher for layer-wise weight decay.
+
+        Args:
+            coarse (bool): If True, use a coarse matcher.
+            prefix (str): Prefix for layer names.
+
+        Returns:
+            dict: Matcher dictionary.
+
+        """
         return dict(
             stem=r'^{}cls_token|{}pos_embed|{}patch_embed'.format(prefix, prefix, prefix),  # stem and embed
             blocks=[(r'^{}blocks\.(\d+)'.format(prefix), None), (r'^{}norm'.format(prefix), (99999,))]
         )
 
 def vit_tiny_patch2_32(pretrained=False, pretrained_path=None, **kwargs):
-    """ ViT-Tiny (Vit-Ti/2)
+    """ViT-Tiny (Vit-Ti/2) model.
+
+    Args:
+        pretrained (bool): Whether to load pretrained weights.
+        pretrained_path (str): Path to pretrained weights.
+        **kwargs: Additional keyword arguments for the VisionTransformer constructor.
+
+    Returns:
+        VisionTransformer: ViT-Tiny model.
+
     """
     model_kwargs = dict(img_size=32, patch_size=2, embed_dim=192, depth=12, num_heads=3, drop_path_rate=0.1, **kwargs)
     model = VisionTransformer(**model_kwargs)
@@ -251,7 +402,16 @@ def vit_tiny_patch2_32(pretrained=False, pretrained_path=None, **kwargs):
 
 
 def vit_small_patch2_32(pretrained=False, pretrained_path=None, **kwargs):
-    """ ViT-Small (ViT-S/2)
+    """ViT-Small (ViT-S/2) model.
+
+    Args:
+        pretrained (bool): Whether to load pretrained weights.
+        pretrained_path (str): Path to pretrained weights.
+        **kwargs: Additional keyword arguments for the VisionTransformer constructor.
+
+    Returns:
+        VisionTransformer: ViT-Small model.
+
     """
     model_kwargs = dict(img_size=32, patch_size=2, embed_dim=384, depth=12, num_heads=6, drop_path_rate=0.2, **kwargs)
     model = VisionTransformer(**model_kwargs)
@@ -261,7 +421,16 @@ def vit_small_patch2_32(pretrained=False, pretrained_path=None, **kwargs):
 
 
 def vit_small_patch16_224(pretrained=False, pretrained_path=None, **kwargs):
-    """ ViT-Small (ViT-S/16)
+    """ViT-Small (ViT-S/16) model.
+
+    Args:
+        pretrained (bool): Whether to load pretrained weights.
+        pretrained_path (str): Path to pretrained weights.
+        **kwargs: Additional keyword arguments for the VisionTransformer constructor.
+
+    Returns:
+        VisionTransformer: ViT-Small model.
+
     """
     model_kwargs = dict(patch_size=16, embed_dim=384, depth=12, num_heads=6, drop_path_rate=0.2, **kwargs)
     model = VisionTransformer(**model_kwargs)
@@ -271,8 +440,19 @@ def vit_small_patch16_224(pretrained=False, pretrained_path=None, **kwargs):
 
 
 def vit_base_patch16_96(pretrained=False, pretrained_path=None, **kwargs):
-    """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    """ViT-Base (ViT-B/16) model with an image size of 96x96 pixels.
+
+    ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
+
+    Args:
+        pretrained (bool): Whether to load pretrained weights.
+        pretrained_path (str): Path to pretrained weights.
+        **kwargs: Additional keyword arguments for the VisionTransformer constructor.
+
+    Returns:
+        VisionTransformer: ViT-Base model with a patch size of 16x16.
+
     """
     model_kwargs = dict(img_size=96, patch_size=16, embed_dim=768, depth=12, num_heads=12, drop_path_rate=0.2, **kwargs)
     model = VisionTransformer(**model_kwargs)
@@ -282,8 +462,19 @@ def vit_base_patch16_96(pretrained=False, pretrained_path=None, **kwargs):
 
 
 def vit_base_patch16_224(pretrained=False, pretrained_path=None, **kwargs):
-    """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    """ViT-Base (ViT-B/16) model with a patch size of 16x16.
+
+    ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
+
+    Args:
+        pretrained (bool): Whether to load pretrained weights.
+        pretrained_path (str): Path to pretrained weights.
+        **kwargs: Additional keyword arguments for the VisionTransformer constructor.
+
+    Returns:
+        VisionTransformer: ViT-Base model with a patch size of 16x16.
+
     """
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, drop_path_rate=0.2, **kwargs)
     model = VisionTransformer(**model_kwargs)

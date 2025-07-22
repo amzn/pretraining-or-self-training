@@ -10,7 +10,16 @@ from torch.nn import functional as F
 
 def smooth_targets(logits, targets, smoothing=0.1):
     """
-    label smoothing
+    Apply label smoothing to the target labels.
+
+    Args:
+        logits (torch.Tensor): Logit values, shape=[Batch size, # of classes].
+        targets (torch.Tensor): Integer or vector representing the target labels, shape=[Batch size] or [Batch size, # of classes].
+        smoothing (float): Smoothing factor for label smoothing.
+
+    Returns:
+        torch.Tensor: Smoothed target distribution.
+
     """
     with torch.no_grad():
         true_dist = torch.zeros_like(logits)
@@ -21,13 +30,16 @@ def smooth_targets(logits, targets, smoothing=0.1):
 
 def ce_loss(logits, targets, reduction='none'):
     """
-    wrapper for cross entropy loss in pytorch.
+    Compute cross-entropy loss.
 
     Args:
-        logits: logit values, shape=[Batch size, # of classes]
-        targets: integer or vector, shape=[Batch size] or [Batch size, # of classes]
-        # use_hard_labels: If True, targets have [Batch size] shape with int values. If False, the target is vector (default True)
-        reduction: the reduction argument
+        logits (torch.Tensor): Logit values, shape=[Batch size, # of classes].
+        targets (torch.Tensor): Integer or vector representing the target labels, shape=[Batch size] or [Batch size, # of classes].
+        reduction (str): The reduction argument for the loss. Options: 'none', 'mean', 'sum'.
+
+    Returns:
+        torch.Tensor: Cross-entropy loss.
+
     """
     if logits.shape == targets.shape:
         # one-hot target
@@ -44,13 +56,17 @@ def ce_loss(logits, targets, reduction='none'):
 
 def consistency_loss(logits, targets, name='ce', mask=None):
     """
-    wrapper for consistency regularization loss in semi-supervised learning.
+    Compute consistency regularization loss in semi-supervised learning.
 
     Args:
-        logits: logit to calculate the loss on and back-propagion, usually being the strong-augmented unlabeled samples
-        targets: pseudo-labels (either hard label or soft label)
-        name: use cross-entropy ('ce') or mean-squared-error ('mse') to calculate loss
-        mask: masks to mask-out samples when calculating the loss, usually being used as confidence-masking-out
+        logits (torch.Tensor): Logits used to calculate the loss and back-propagate. Typically, strong-augmented unlabeled samples.
+        targets (torch.Tensor): Pseudo-labels, either hard label or soft label.
+        name (str): Type of loss to calculate. Options: 'ce' (cross-entropy), 'mse' (mean squared error).
+        mask (torch.Tensor, optional): Mask to mask out samples when calculating the loss. Used for confidence masking.
+
+    Returns:
+        torch.Tensor: Consistency regularization loss.
+
     """
 
     assert name in ['ce', 'mse']
