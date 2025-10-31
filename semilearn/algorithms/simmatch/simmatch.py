@@ -40,7 +40,6 @@ class SimMatch_Net(nn.Module):
 class SimMatch(AlgorithmBase):
     """
     SimMatch algorithm (https://arxiv.org/abs/2203.06915).
-    Reference implementation (https://github.com/KyleZheng1997/simmatch).
 
     Args:
         - args (`argparse`):
