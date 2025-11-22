@@ -142,10 +142,10 @@ def group_parameters(
 
 def param_groups_layer_decay(
         model: nn.Module,
-        lr : float=1e-3,
+        lr: float=1e-3,
         weight_decay: float = 0.05,
-        no_weight_decay_list: Tuple[str] = (),
-        layer_decay: float = .75,
+        no_weight_decay_list: Tuple[str, ...] = (),
+        layer_decay: float = 0.75,
         end_layer_decay: Optional[float] = None,
 ):
     """
